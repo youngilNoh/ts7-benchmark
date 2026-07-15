@@ -1,0 +1,29 @@
+{
+  // This lives outside the `zod/` submodule on purpose: the parent repo can only
+  // pin a submodule to a commit, it can't track extra files placed inside it, so
+  // a file dropped inside `zod/` would silently vanish on a fresh clone or
+  // `git submodule update`.
+  //
+  // It extends zod's own tsconfig.json (keeping its module/type settings intact)
+  // and overrides two rules: zod's test files intentionally declare
+  // "type-assertion only" locals (e.g. `_Cat`, `_a`) that are never read again
+  // — their purpose is just to confirm a type resolves correctly at compile
+  // time. zod's own noUnusedLocals/noUnusedParameters rules flag these, but
+  // zod's normal workflow (vitest) never runs a strict whole-project tsc pass
+  // that would hit this. Since our benchmark only cares about type-checking
+  // correctness/speed, not unused-variable lint, we turn those two rules off
+  // here rather than touching zod's own source.
+  "extends": "./zod/packages/zod/tsconfig.json",
+  "compilerOptions": {
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+
+    // zod's "types": ["vitest", "recheck"] entries live at fixtures/real-world/zod/node_modules
+    // (pnpm hoists them to the submodule root, not into packages/zod/node_modules). TypeScript's
+    // default type-search walks UP from wherever this config file sits, so once this file moved
+    // outside the submodule, that walk no longer passes through the submodule's node_modules and
+    // "vitest"/"recheck" stopped resolving. Pointing typeRoots at that folder directly fixes it
+    // regardless of where this config file lives.
+    "typeRoots": ["./zod/node_modules"]
+  }
+}
