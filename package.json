@@ -13,8 +13,8 @@
     "url": "git+https://github.com/youngilNoh/ts7-benchmark.git"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Charlie",
+  "license": "MIT",
   "type": "commonjs",
   "bugs": {
     "url": "https://github.com/youngilNoh/ts7-benchmark/issues"

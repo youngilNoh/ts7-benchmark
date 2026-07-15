@@ -1,0 +1,3 @@
+# TypeScript 7 vs 6 - Type-Checking Benchmark
+
+This repository measures and compares the type-checking performance of the native TypeScript 7 compiler against TypeScript 6 in a reproducible way. It runs `tsc --noEmit` over both synthetic fixtures (generated at controlled sizes) and a pinned real-world project, recording wall-clock time and peak memory across different `--checkers` settings, then publishes the results as an interactive chart. The goal is a clear, honest, and repeatable picture of how much faster TS7 actually is — and under what conditions — rather than relying on one-off anecdotal numbers.
