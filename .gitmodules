@@ -1,0 +1,3 @@
+[submodule "fixtures/real-world/zod"]
+	path = fixtures/real-world/zod
+	url = https://github.com/colinhacks/zod.git
