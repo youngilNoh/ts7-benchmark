@@ -15,12 +15,13 @@
   "keywords": [],
   "author": "Charlie",
   "license": "MIT",
-  "type": "commonjs",
+  "type": "module",
   "bugs": {
     "url": "https://github.com/youngilNoh/ts7-benchmark/issues"
   },
   "homepage": "https://github.com/youngilNoh/ts7-benchmark#readme",
   "devDependencies": {
+    "@types/node": "^26.1.1",
     "@typescript/typescript6": "^6.0.2",
     "typescript": "^7.0.2"
   }
