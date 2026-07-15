@@ -1,0 +1,4 @@
+/ts7-benchmark-plan.md
+node_modules/
+*.log
+/.DS_STORE

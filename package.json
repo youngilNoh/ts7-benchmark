@@ -1,0 +1,27 @@
+{
+  "name": "ts7-benchmark",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "ts7": "node ./node_modules/typescript/bin/tsc",
+    "ts6": "node ./node_modules/@typescript/typescript6/bin/tsc6"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/youngilNoh/ts7-benchmark.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/youngilNoh/ts7-benchmark/issues"
+  },
+  "homepage": "https://github.com/youngilNoh/ts7-benchmark#readme",
+  "devDependencies": {
+    "@typescript/typescript6": "^6.0.2",
+    "typescript": "^7.0.2"
+  }
+}
