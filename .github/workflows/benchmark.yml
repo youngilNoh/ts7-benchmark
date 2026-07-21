@@ -1,7 +1,13 @@
 name: Run TypeScript Benchmark
 
+permissions:
+  contents: write
+
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * 0'
+
 
 jobs:
   benchmark:
@@ -38,3 +44,10 @@ jobs:
           node fixtures/synthetic/generate.ts --files 20 --linesPerFile 6000
       - name: Run benchmark
         run: ./scripts/run-bench.sh
+      - name: Commit results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add results/
+          git commit -m "Update benchmark results" || echo "No changes to commit"
+          git push
