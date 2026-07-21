@@ -9,6 +9,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+            submodules: true
       - name: Print runner spec
         run: |
           echo "CPU cores:"
@@ -21,7 +23,10 @@ jobs:
           node-version: '24'
       - name: Install hyperfine
         run: sudo apt-get update && sudo apt-get install -y hyperfine
-      - name: Verify installs
+      - name: Install dependencies
+        run: npm install
+      - name: Generate synthetic fixtures
         run: |
-          node -v
-          hyperfine --version
+          node fixtures/synthetic/generate.ts --files 10 --linesPerFile 50
+          node fixtures/synthetic/generate.ts --files 10 --linesPerFile 1500
+          node fixtures/synthetic/generate.ts --files 20 --linesPerFile 6000
