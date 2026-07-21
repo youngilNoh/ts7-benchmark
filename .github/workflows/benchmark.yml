@@ -25,8 +25,16 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y hyperfine
       - name: Install dependencies
         run: npm install
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - name: Install real-world fixture dependencies
+        run: cd fixtures/real-world/zod && pnpm install --filter zod...
       - name: Generate synthetic fixtures
         run: |
           node fixtures/synthetic/generate.ts --files 10 --linesPerFile 50
           node fixtures/synthetic/generate.ts --files 10 --linesPerFile 1500
           node fixtures/synthetic/generate.ts --files 20 --linesPerFile 6000
+      - name: Run benchmark
+        run: ./scripts/run-bench.sh
