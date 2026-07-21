@@ -9,3 +9,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Print runner spec
+        run: |
+          echo "CPU cores:"
+          nproc
+          echo "Memory:"
+          free -h
