@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Reproducible type-checking benchmark: TypeScript 7 (native) vs TypeScript 6."
+    />
+    <title>TS7 Benchmark — TypeScript 7 vs 6</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <script type="module" src="/src/main.ts"></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container header-inner">
+        <div class="brand">TS7 Benchmark</div>
+        <nav class="header-nav">
+          <a href="https://github.com/youngilNoh/ts7-benchmark">GitHub</a>
+          <a href="./summary.json">Data</a>
+          <a
+            class="button-primary"
+            href="https://github.com/youngilNoh/ts7-benchmark/actions/workflows/benchmark.yml"
+            >Run Benchmark</a
+          >
+        </nav>
+      </div>
+    </header>
+
+    <main class="container main-content">
+      <p id="load-error" class="load-error" hidden>
+        Failed to load <code>summary.json</code> — run the benchmark pipeline first.
+      </p>
+
+      <!-- Hero -->
+      <section class="hero-grid">
+        <div class="hero-copy">
+          <h1>TypeScript 7 vs 6</h1>
+          <p class="hero-subtitle">Type-Checking Performance Report</p>
+          <p class="hero-desc">
+            Reproducible <code>tsc --noEmit</code> comparison between the native TypeScript 7
+            compiler and TypeScript 6, across synthetic fixtures and a pinned real-world project
+            (zod), measuring wall-clock time and peak memory per
+            <code>--checkers</code> setting.
+          </p>
+        </div>
+        <div class="panel summary-card">
+          <div class="summary-card-top">
+            <span class="chip chip-secondary">SUMMARY METRIC</span>
+            <span class="mono muted" id="timestamp-badge">loading…</span>
+          </div>
+          <div>
+            <div class="display-metric" id="hero-speedup">—</div>
+            <div class="muted" id="hero-speedup-caption">Loading results…</div>
+          </div>
+          <div class="summary-card-foot" id="hero-versions"></div>
+        </div>
+      </section>
+
+      <!-- Charts -->
+      <section class="charts-grid">
+        <div class="panel chart-panel accent-secondary">
+          <div class="panel-head">
+            <h2>Mean check time by fixture</h2>
+            <div class="panel-head-tools">
+              <div class="legend">
+                <span class="legend-item"><span class="swatch swatch-ts6"></span>TS6</span>
+                <span class="legend-item"><span class="swatch swatch-ts7"></span>TS7</span>
+              </div>
+              <div class="segmented" id="checkers-select" role="group" aria-label="checkers"></div>
+            </div>
+          </div>
+          <div class="bar-chart" id="bar-chart"></div>
+        </div>
+
+        <div class="panel chart-panel accent-primary">
+          <div class="panel-head">
+            <h2>Speedup scaling with --checkers</h2>
+          </div>
+          <div class="line-chart" id="line-chart"></div>
+          <div class="callout" id="line-chart-callout"></div>
+        </div>
+      </section>
+
+      <!-- Table -->
+      <section class="panel table-panel">
+        <div class="table-head">
+          <h3>Detailed results</h3>
+          <button class="link-button" id="export-csv" type="button">Export CSV</button>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Fixture</th>
+                <th>Checkers</th>
+                <th>Version</th>
+                <th>Mean</th>
+                <th>Median</th>
+                <th>StdDev</th>
+                <th>Max Memory (MB)</th>
+              </tr>
+            </thead>
+            <tbody id="results-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Runner / methodology -->
+      <section class="info-grid">
+        <div class="panel info-card">
+          <h4>Runner hardware</h4>
+          <p class="mono" id="runner-info">loading…</p>
+        </div>
+        <div class="panel info-card">
+          <h4>Compilers</h4>
+          <p class="mono" id="compiler-info">loading…</p>
+        </div>
+        <div class="panel info-card">
+          <h4>Methodology</h4>
+          <p class="mono">
+            hyperfine, 10 timed runs + 2 warmups<br />
+            Peak RSS via GNU time (-v)<br />
+            tsc --noEmit, project mode (-p)
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <div>
+          <div class="brand">TS7 Benchmark</div>
+          <div class="muted small" id="footer-copy"></div>
+        </div>
+        <nav class="footer-nav">
+          <a href="https://github.com/youngilNoh/ts7-benchmark">Repository</a>
+          <a href="https://github.com/youngilNoh/ts7-benchmark/blob/main/ts7-benchmark-plan.md">Implementation Plan</a>
+          <a href="https://github.com/youngilNoh/ts7-benchmark/actions">CI Status</a>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>

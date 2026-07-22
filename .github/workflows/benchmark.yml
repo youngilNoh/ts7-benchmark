@@ -44,6 +44,8 @@ jobs:
           node fixtures/synthetic/generate.ts --files 20 --linesPerFile 6000
       - name: Run benchmark
         run: ./scripts/run-bench.sh
+      - name: Collect results
+        run: node scripts/collect-results.ts
       - name: Commit results
         run: |
           git config user.name "github-actions[bot]"

@@ -10,6 +10,7 @@ const RESULTS_ROOT = 'results/';
  *
  * {
  *   meta: {
+ *     generatedAt: string,  // ISO timestamp of when results were collected
  *     ts6Version: string,   // installed typescript@6 version, e.g. "6.0.3"
  *     ts7Version: string,   // installed typescript@7 version, e.g. "7.0.2"
  *     runner: {
@@ -94,6 +95,7 @@ function collectResults() {
 
   const summary = {
     meta: {
+      generatedAt: new Date().toISOString(),
       ts6Version: getCompilerVersion('ts6'),
       ts7Version: getCompilerVersion('ts7'),
       runner: getRunnerSpec(),
