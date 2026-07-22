@@ -1,23 +1,23 @@
 	Command being timed: "npm run --silent ts7 -- --noEmit -p fixtures/real-world/zod.tsconfig.bench.json --checkers 4"
-	User time (seconds): 9.46
-	System time (seconds): 0.18
-	Percent of CPU this job got: 373%
-	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:02.58
+	User time (seconds): 4.19
+	System time (seconds): 0.30
+	Percent of CPU this job got: 418%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:01.07
 	Average shared text size (kbytes): 0
 	Average unshared data size (kbytes): 0
 	Average stack size (kbytes): 0
 	Average total size (kbytes): 0
-	Maximum resident set size (kbytes): 1070392
+	Maximum resident set size (kbytes): 945184
 	Average resident set size (kbytes): 0
-	Major (requiring I/O) page faults: 0
-	Minor (reclaiming a frame) page faults: 17657
-	Voluntary context switches: 943
-	Involuntary context switches: 1909
+	Major (requiring I/O) page faults: 154
+	Minor (reclaiming a frame) page faults: 67707
+	Voluntary context switches: 427
+	Involuntary context switches: 6974
 	Swaps: 0
 	File system inputs: 0
-	File system outputs: 8
+	File system outputs: 0
 	Socket messages sent: 0
 	Socket messages received: 0
-	Signals delivered: 0
-	Page size (bytes): 4096
+	Signals delivered: 627
+	Page size (bytes): 16384
 	Exit status: 0

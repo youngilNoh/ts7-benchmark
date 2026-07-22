@@ -63,32 +63,55 @@ function extractMemoryKb(filePath: string): number {
   return Number(match[1]);
 }
 
-function parseHyperfineFilename(filename: string): { fixture: string; checkers: number } {
-  const match = filename.match(/^(.+)-bench-checkers-(\d+)\.json$/);
+function parseTs6Filename(filename: string): { fixture: string } {
+  const match = filename.match(/^(.+)-ts6\.json$/);
   if (!match) {
-    throw new Error(`Unexpected hyperfine result filename: ${filename}`);
+    throw new Error(`Unexpected TS6 result filename: ${filename}`);
+  }
+  return { fixture: match[1] };
+}
+
+function parseTs7Filename(filename: string): { fixture: string; checkers: number } {
+  const match = filename.match(/^(.+)-ts7-checkers-(\d+)\.json$/);
+  if (!match) {
+    throw new Error(`Unexpected TS7 result filename: ${filename}`);
   }
   return { fixture: match[1], checkers: Number(match[2]) };
 }
 
 function collectResults() {
-  const allFileList = fs.readdirSync(RESULTS_ROOT)
-  const hyperfineResults = allFileList.filter(file => /-bench-checkers-\d+\.json$/.test(file))
+  const allFileList = fs.readdirSync(RESULTS_ROOT);
 
-  const results = hyperfineResults.map(filename => {
-    const { fixture, checkers } = parseHyperfineFilename(filename);
-
+  // TS6 is measured once per fixture (it has no --checkers concept), so its
+  // stats are collected into a per-fixture lookup and reused for every
+  // checkers row below, instead of being re-measured for each one.
+  const ts6ByFixture = new Map<string, ReturnType<typeof summarizeTime> & { memoryKb: number }>();
+  for (const filename of allFileList.filter(f => /^.+-ts6\.json$/.test(f))) {
+    const { fixture } = parseTs6Filename(filename);
     const hyperfineData = JSON.parse(fs.readFileSync(path.join(RESULTS_ROOT, filename), 'utf8'));
     const ts6Time = hyperfineData.results.find((r: any) => r.command === 'TS6');
-    const ts7Time = hyperfineData.results.find((r: any) => r.command.startsWith('TS7'));
+    const ts6MemoryKb = extractMemoryKb(path.join(RESULTS_ROOT, `${fixture}-ts6-mem.txt`));
+    ts6ByFixture.set(fixture, { ...summarizeTime(ts6Time), memoryKb: ts6MemoryKb });
+  }
 
-    const ts6MemoryKb = extractMemoryKb(path.join(RESULTS_ROOT, `${fixture}-checkers-ts6-mem.txt`));
+  const ts7Results = allFileList.filter(f => /^.+-ts7-checkers-\d+\.json$/.test(f));
+
+  const results = ts7Results.map(filename => {
+    const { fixture, checkers } = parseTs7Filename(filename);
+
+    const hyperfineData = JSON.parse(fs.readFileSync(path.join(RESULTS_ROOT, filename), 'utf8'));
+    const ts7Time = hyperfineData.results.find((r: any) => r.command.startsWith('TS7'));
     const ts7MemoryKb = extractMemoryKb(path.join(RESULTS_ROOT, `${fixture}-checkers-${checkers}-ts7-mem.txt`));
+
+    const ts6 = ts6ByFixture.get(fixture);
+    if (!ts6) {
+      throw new Error(`No TS6 baseline found for fixture "${fixture}"`);
+    }
 
     return {
       fixture,
       checkers,
-      ts6: { ...summarizeTime(ts6Time), memoryKb: ts6MemoryKb },
+      ts6,
       ts7: { ...summarizeTime(ts7Time), memoryKb: ts7MemoryKb },
     };
   });
