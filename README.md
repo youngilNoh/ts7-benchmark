@@ -31,7 +31,7 @@ TS7 type-checks roughly **3–4× faster** than TS6 across the fixtures. Most of
 
 The synthetic fixtures show a smaller, flatter speedup than the real-world project (zod), which leans on complex generics and benefits the most from extra checkers, up to the core count.
 
-For the current numbers, the interactive charts, and a full data table, see the **[live dashboard](https://youngilnoh.github.io/ts7-benchmark/)**.
+For the current numbers, the interactive charts, and a full data table, see the **[live dashboard](https://yesimnoh.github.io/ts7-benchmark/)**.
 
 Raw data lives in [`results/`](./results/). The merged file the dashboard reads is [`results/summary.json`](./results/summary.json); its shape is documented at the top of [`scripts/collect-results.ts`](./scripts/collect-results.ts).
 
