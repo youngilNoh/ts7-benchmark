@@ -8,7 +8,7 @@
 
 This benchmark checks how much faster the native TypeScript 7 compiler type-checks compared to TypeScript 6, instead of just repeating the "10x faster" claims you see online. It runs `tsc --noEmit` on synthetic fixtures (generated at controlled sizes) and one pinned real-world project ([zod](https://github.com/colinhacks/zod)), and records wall-clock time and peak memory. TS7 can also type-check in parallel, so this measures how results change with its new `--checkers` option. Numbers update automatically every week via GitHub Actions and get published to an interactive dashboard.
 
-**▶ Live dashboard: https://youngilnoh.github.io/ts7-benchmark/**
+**▶ Live dashboard: https://yesimnoh.github.io/ts7-benchmark/**
 
 ![Demo dashboard](docs/demo.png)
 
