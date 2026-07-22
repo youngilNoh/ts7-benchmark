@@ -159,44 +159,48 @@ function renderLineChart(data: Summary): void {
     `Peak speedup: ${speedup(best).toFixed(2)}x on ${best.fixture} with --checkers ${best.checkers}.`;
 }
 
-function renderTable(data: Summary): void {
-  const versionRow = (e: ResultEntry, label: 'ts6' | 'ts7') => {
-    const stats = e[label];
-    const versionText =
-      label === 'ts7' ? `TS ${data.meta.ts7Version}` : `TS ${data.meta.ts6Version}`;
-    return `
-      <tr>
-        <td>${e.fixture}</td>
-        <td>${label === 'ts7' ? e.checkers : '—'}</td>
-        <td><span class="version-badge ${label}">${versionText}</span></td>
-        <td>${formatSec(stats.meanSec)}</td>
-        <td>${formatSec(stats.medianSec)}</td>
-        <td class="stddev">±${stats.stddevSec.toFixed(3)}s</td>
-        <td>${formatMb(stats.memoryKb)}</td>
-      </tr>`;
-  };
+function groupByFixture(
+  results: ResultEntry[],
+): Array<{ fixture: string; ts6: VersionStats; entries: ResultEntry[] }> {
+  return FIXTURE_ORDER.filter(fixture => results.some(r => r.fixture === fixture)).map(
+    fixture => {
+      const entries = sortResults(results.filter(r => r.fixture === fixture));
+      return { fixture, ts6: entries[0].ts6, entries };
+    },
+  );
+}
 
-  document.getElementById('results-tbody')!.innerHTML = sortResults(data.results)
-    .map(e => versionRow(e, 'ts6') + versionRow(e, 'ts7'))
-    .join('');
+function renderTable(data: Summary): void {
+  const row = (fixture: string, checkersLabel: string, versionClass: 'ts6' | 'ts7', versionText: string, stats: VersionStats) => `
+    <tr>
+      <td>${fixture}</td>
+      <td>${checkersLabel}</td>
+      <td><span class="version-badge ${versionClass}">${versionText}</span></td>
+      <td>${formatSec(stats.meanSec)}</td>
+      <td>${formatSec(stats.medianSec)}</td>
+      <td class="stddev">±${stats.stddevSec.toFixed(3)}s</td>
+      <td>${formatMb(stats.memoryKb)}</td>
+    </tr>`;
+
+  const rows = groupByFixture(data.results).flatMap(({ fixture, ts6, entries }) => [
+    row(fixture, '—', 'ts6', `TS ${data.meta.ts6Version}`, ts6),
+    ...entries.map(e => row(fixture, String(e.checkers), 'ts7', `TS ${data.meta.ts7Version}`, e.ts7)),
+  ]);
+
+  document.getElementById('results-tbody')!.innerHTML = rows.join('');
 }
 
 function setupCsvExport(data: Summary): void {
   document.getElementById('export-csv')!.addEventListener('click', () => {
     const header = 'fixture,checkers,version,mean_sec,median_sec,stddev_sec,memory_kb';
-    const rows = sortResults(data.results).flatMap(e =>
-      (['ts6', 'ts7'] as const).map(v =>
-        [
-          e.fixture,
-          e.checkers,
-          v === 'ts7' ? data.meta.ts7Version : data.meta.ts6Version,
-          e[v].meanSec,
-          e[v].medianSec,
-          e[v].stddevSec,
-          e[v].memoryKb,
-        ].join(','),
-      ),
-    );
+    const csvRow = (fixture: string, checkers: string, version: string, stats: VersionStats) =>
+      [fixture, checkers, version, stats.meanSec, stats.medianSec, stats.stddevSec, stats.memoryKb].join(',');
+
+    const rows = groupByFixture(data.results).flatMap(({ fixture, ts6, entries }) => [
+      csvRow(fixture, '', data.meta.ts6Version, ts6),
+      ...entries.map(e => csvRow(fixture, String(e.checkers), data.meta.ts7Version, e.ts7)),
+    ]);
+
     const blob = new Blob([[header, ...rows].join('\n')], { type: 'text/csv' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
