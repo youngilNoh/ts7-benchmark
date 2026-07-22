@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![Live demo](https://img.shields.io/badge/demo-GitHub%20Pages-2ea44f)](https://youngilnoh.github.io/ts7-benchmark/)
 
-A reproducible benchmark comparing the **type-checking performance of the native TypeScript 7 compiler against TypeScript 6**. It runs `tsc --noEmit` over both synthetic fixtures (generated at controlled sizes) and a pinned real-world project ([zod](https://github.com/colinhacks/zod)), records wall-clock time and peak memory, and — because TS7 can type-check in parallel — measures how results scale with the new `--checkers` option. Numbers refresh automatically every week via GitHub Actions and are published to an interactive dashboard.
+This benchmark checks how much faster the native TypeScript 7 compiler type-checks compared to TypeScript 6, instead of just repeating the "10x faster" claims you see online. It runs `tsc --noEmit` on synthetic fixtures (generated at controlled sizes) and one pinned real-world project ([zod](https://github.com/colinhacks/zod)), and records wall-clock time and peak memory. TS7 can also type-check in parallel, so this measures how results change with its new `--checkers` option. Numbers update automatically every week via GitHub Actions and get published to an interactive dashboard.
 
 **▶ Live dashboard: https://youngilnoh.github.io/ts7-benchmark/**
 
@@ -16,15 +16,20 @@ A reproducible benchmark comparing the **type-checking performance of the native
 
 ## Goals
 
-The web is full of one-off "TS7 is 10× faster!" screenshots with no way to check them. This repo aims for the opposite:
+The point of this project is to verify TS7's speed claims, not just repeat them. That means:
 
-- **Reproducible** — anyone can clone it and get comparable numbers with a couple of commands. Compiler versions are pinned; the real-world fixture is pinned to an exact commit.
-- **Honest** — it reports what it actually measured (type-checking only), on what hardware, over how many runs, and it is upfront about its [limitations](#limitations).
-- **Scale-aware** — it measures across four fixture sizes and three `--checkers` settings, so you can see *where* the speedup comes from instead of a single headline number.
+- **Reproducible** — clone it, run a few commands, get numbers you can compare. Compiler versions are pinned, and the real-world fixture is pinned to an exact commit.
+- **Honest** — it reports exactly what was measured (type-checking only), on what hardware, over how many runs. See [Limitations](#limitations) for what it doesn't cover.
+- **Scale-aware** — measured across four fixture sizes and three `--checkers` settings, so you can see where the speedup actually comes from, not just one headline number.
 
 ## Results
 
-At the time of writing, TS7 type-checks roughly **3–4× faster** than TS6 across the fixtures, and the gap tends to **widen on larger codebases and with more checkers**. The synthetic fixtures show a smaller, flatter speedup; the real-world project (zod), which leans heavily on complex generics, benefits the most from extra checkers.
+TS7 type-checks roughly **3–4× faster** than TS6 across the fixtures. Most of that gain shows up going from `--checkers 1` to `--checkers 4`. On the current CI runner (4 CPU cores), `--checkers 8` doesn't help much beyond that, and is sometimes a little slower — there just aren't enough cores to keep 8 workers busy. On a machine with more cores, that ceiling would likely move higher.
+
+> [!TIP]
+> This is the [`--checkers` theory](#why-ts7-has-a---checkers-option-and-ts6-doesnt) showing up directly in the data: more checker workers than you have CPU cores can't run in parallel, so they stop helping (and can even add a little overhead). The CI runner here has 4 cores, and sure enough, `--checkers 8` barely beats — and sometimes loses to — `--checkers 4`. Run it on a machine with 8+ cores and you'd expect that ceiling to move.
+
+The synthetic fixtures show a smaller, flatter speedup than the real-world project (zod), which leans on complex generics and benefits the most from extra checkers, up to the core count.
 
 For the current numbers, the interactive charts, and a full data table, see the **[live dashboard](https://youngilnoh.github.io/ts7-benchmark/)**.
 
@@ -39,18 +44,18 @@ Raw data lives in [`results/`](./results/). The merged file the dashboard reads 
 | **TS7** | `typescript@7` (the native / Go compiler) | `npm run ts7 -- …` |
 | **TS6** | `@typescript/typescript6` | `npm run ts6 -- …` |
 
-Both compilers are invoked through `package.json` scripts rather than `npx tsc`. This is deliberate: installing `@typescript/typescript6` pulls a real TypeScript 6 into the tree, and *both* it and TypeScript 7 want the `tsc` binary name — so `npx tsc` resolves to whichever won that collision (it's TS6) and is unreliable. The `ts6` / `ts7` scripts point at each compiler by path, so there is never any ambiguity about which one ran.
+Both compilers are invoked through `package.json` scripts (`npm run ts6` / `npm run ts7`), not `npx tsc`. Reason: installing `@typescript/typescript6` pulls a real TypeScript 6 into the tree, and it and TypeScript 7 both want the `tsc` binary name. `npx tsc` ends up resolving to whichever one won that name collision (TS6), so it's not reliable. The `ts6` / `ts7` scripts point at each compiler by path instead, so there's no ambiguity about which one ran.
 
 ### Why TS7 has a `--checkers` option (and TS6 doesn't)
 
-TypeScript 7 is a **ground-up rewrite of the compiler in Go** (the "native" compiler, previously known as *typescript-go*). That rewrite is what makes parallel type-checking possible:
+TypeScript 7 rewrote the compiler in Go (this is the "native" compiler, previously called *typescript-go*). That's what makes parallel type-checking possible:
 
-- TypeScript 5/6 are written in TypeScript and run on a **single-threaded** JavaScript runtime. The type checker builds a huge graph of shared, mutable state (symbols, types, inference results). JavaScript workers are *share-nothing* — they'd have to serialize and copy all of that between threads, which is far too expensive — so checking the program on multiple cores was never practical.
-- Go has cheap concurrency (goroutines) and a **shared-memory** model, so the native compiler can run **several type-checking workers over the same program representation at once**.
+- TypeScript 5/6 run on a single-threaded JavaScript runtime, and the type checker builds one large, shared, mutable graph of state (symbols, types, inference results). JS worker threads don't share memory — moving that graph between threads would mean copying all of it, which is too slow to be worth it. So checking on multiple cores was never really an option.
+- Go supports cheap concurrency (goroutines) and shared memory, so the native compiler can run several checker workers over the same program at once.
 
-`--checkers N` exposes exactly that: how many parallel checker workers to use (default `4`). Each worker keeps its own view of the program, but for the same input files the work is partitioned **deterministically** — so changing the checker count changes *speed and memory*, never the set of reported errors. More checkers use more cores but also more memory (each worker keeps its own state), which is why memory-constrained CI often pins `--checkers 1`.
+`--checkers N` is that setting: how many parallel checker workers to use (default `4`). Each worker gets its own view of the program, but the work is split up the same way every time for the same input — so changing the checker count changes speed and memory, never which errors get reported. More checkers use more cores and more memory (each worker keeps its own state), which is why memory-constrained CI often sticks to `--checkers 1`.
 
-This benchmark runs TS7 at `--checkers 1`, `4`, and `8` for every fixture so the scaling curve is visible. TS6, having no such concept, is measured **once per fixture** and reused as the baseline for all three checker rows.
+This benchmark runs TS7 at `--checkers 1`, `4`, and `8` for every fixture to see how it scales. TS6 has no such setting, so it's measured once per fixture and that single result is reused as the baseline for all three checker rows.
 
 ### Fixtures
 
