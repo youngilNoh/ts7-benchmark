@@ -4,11 +4,11 @@
 
 [![Benchmark](https://github.com/youngilNoh/ts7-benchmark/actions/workflows/benchmark.yml/badge.svg)](https://github.com/youngilNoh/ts7-benchmark/actions/workflows/benchmark.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
-[![Live demo](https://img.shields.io/badge/demo-GitHub%20Pages-2ea44f)](https://youngilnoh.github.io/ts7-benchmark/)
+[![Live demo](https://img.shields.io/badge/demo-GitHub%20Pages-2ea44f)](https://yesimnoh.github.io/ts7-benchmark/)
 
 이 벤치마크는 네이티브 TypeScript 7 컴파일러가 TypeScript 6보다 타입 체크를 얼마나 빠르게 하는지를 실제로 확인합니다 — 인터넷에서 흔히 보는 "10배 빠르다" 같은 주장을 그대로 옮기는 대신에요. 합성(synthetic) fixture(크기를 조절해 생성)와 커밋 해시로 고정해둔 실제 오픈소스 프로젝트([zod](https://github.com/colinhacks/zod)) 양쪽에 `tsc --noEmit`을 돌려서 실행 시간과 최대 메모리 사용량을 기록합니다. TS7은 병렬로 타입 체크를 할 수 있어서, 새로 생긴 `--checkers` 옵션에 따라 결과가 어떻게 바뀌는지도 함께 봅니다. 수치는 GitHub Actions로 매주 자동 갱신되고 인터랙티브 대시보드에 올라갑니다.
 
-**▶ 실시간 데모: https://youngilnoh.github.io/ts7-benchmark/**
+**▶ 실시간 데모: https://yesimnoh.github.io/ts7-benchmark/**
 
 ![데모 대시보드](docs/demo.png)
 
