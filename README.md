@@ -1,5 +1,7 @@
 # TypeScript 7 vs 6 — Type-Checking Benchmark
 
+🇺🇸 English | [🇰🇷 한국어](./README.ko.md)
+
 [![Benchmark](https://github.com/youngilNoh/ts7-benchmark/actions/workflows/benchmark.yml/badge.svg)](https://github.com/youngilNoh/ts7-benchmark/actions/workflows/benchmark.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![Live demo](https://img.shields.io/badge/demo-GitHub%20Pages-2ea44f)](https://youngilnoh.github.io/ts7-benchmark/)
