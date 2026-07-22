@@ -1,3 +1,140 @@
-# TypeScript 7 vs 6 - Type-Checking Benchmark
+# TypeScript 7 vs 6 — Type-Checking Benchmark
 
-This repository measures and compares the type-checking performance of the native TypeScript 7 compiler against TypeScript 6 in a reproducible way. It runs `tsc --noEmit` over both synthetic fixtures (generated at controlled sizes) and a pinned real-world project, recording wall-clock time and peak memory across different `--checkers` settings, then publishes the results as an interactive chart. The goal is a clear, honest, and repeatable picture of how much faster TS7 actually is — and under what conditions — rather than relying on one-off anecdotal numbers.
+[![Benchmark](https://github.com/youngilNoh/ts7-benchmark/actions/workflows/benchmark.yml/badge.svg)](https://github.com/youngilNoh/ts7-benchmark/actions/workflows/benchmark.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+[![Live demo](https://img.shields.io/badge/demo-GitHub%20Pages-2ea44f)](https://youngilnoh.github.io/ts7-benchmark/)
+
+A reproducible benchmark comparing the **type-checking performance of the native TypeScript 7 compiler against TypeScript 6**. It runs `tsc --noEmit` over both synthetic fixtures (generated at controlled sizes) and a pinned real-world project ([zod](https://github.com/colinhacks/zod)), records wall-clock time and peak memory, and — because TS7 can type-check in parallel — measures how results scale with the new `--checkers` option. Numbers refresh automatically every week via GitHub Actions and are published to an interactive dashboard.
+
+**▶ Live dashboard: https://youngilnoh.github.io/ts7-benchmark/**
+
+![Demo dashboard](docs/demo.png)
+
+---
+
+## Goals
+
+The web is full of one-off "TS7 is 10× faster!" screenshots with no way to check them. This repo aims for the opposite:
+
+- **Reproducible** — anyone can clone it and get comparable numbers with a couple of commands. Compiler versions are pinned; the real-world fixture is pinned to an exact commit.
+- **Honest** — it reports what it actually measured (type-checking only), on what hardware, over how many runs, and it is upfront about its [limitations](#limitations).
+- **Scale-aware** — it measures across four fixture sizes and three `--checkers` settings, so you can see *where* the speedup comes from instead of a single headline number.
+
+## Results
+
+At the time of writing, TS7 type-checks roughly **3–4× faster** than TS6 across the fixtures, and the gap tends to **widen on larger codebases and with more checkers**. The synthetic fixtures show a smaller, flatter speedup; the real-world project (zod), which leans heavily on complex generics, benefits the most from extra checkers.
+
+For the current numbers, the interactive charts, and a full data table, see the **[live dashboard](https://youngilnoh.github.io/ts7-benchmark/)**.
+
+Raw data lives in [`results/`](./results/). The merged file the dashboard reads is [`results/summary.json`](./results/summary.json); its shape is documented at the top of [`scripts/collect-results.ts`](./scripts/collect-results.ts).
+
+## Methodology
+
+### The two compilers
+
+| Alias | Package | Invoked as |
+| --- | --- | --- |
+| **TS7** | `typescript@7` (the native / Go compiler) | `npm run ts7 -- …` |
+| **TS6** | `@typescript/typescript6` | `npm run ts6 -- …` |
+
+Both compilers are invoked through `package.json` scripts rather than `npx tsc`. This is deliberate: installing `@typescript/typescript6` pulls a real TypeScript 6 into the tree, and *both* it and TypeScript 7 want the `tsc` binary name — so `npx tsc` resolves to whichever won that collision (it's TS6) and is unreliable. The `ts6` / `ts7` scripts point at each compiler by path, so there is never any ambiguity about which one ran.
+
+### Why TS7 has a `--checkers` option (and TS6 doesn't)
+
+TypeScript 7 is a **ground-up rewrite of the compiler in Go** (the "native" compiler, previously known as *typescript-go*). That rewrite is what makes parallel type-checking possible:
+
+- TypeScript 5/6 are written in TypeScript and run on a **single-threaded** JavaScript runtime. The type checker builds a huge graph of shared, mutable state (symbols, types, inference results). JavaScript workers are *share-nothing* — they'd have to serialize and copy all of that between threads, which is far too expensive — so checking the program on multiple cores was never practical.
+- Go has cheap concurrency (goroutines) and a **shared-memory** model, so the native compiler can run **several type-checking workers over the same program representation at once**.
+
+`--checkers N` exposes exactly that: how many parallel checker workers to use (default `4`). Each worker keeps its own view of the program, but for the same input files the work is partitioned **deterministically** — so changing the checker count changes *speed and memory*, never the set of reported errors. More checkers use more cores but also more memory (each worker keeps its own state), which is why memory-constrained CI often pins `--checkers 1`.
+
+This benchmark runs TS7 at `--checkers 1`, `4`, and `8` for every fixture so the scaling curve is visible. TS6, having no such concept, is measured **once per fixture** and reused as the baseline for all three checker rows.
+
+### Fixtures
+
+- **Synthetic** (`small` / `medium` / `large`) — generated by [`fixtures/synthetic/generate.ts`](./fixtures/synthetic/generate.ts), which emits random-but-valid interfaces and generic functions until a target line count is reached. Sizes are chosen by total line count (~500 / ~15k / ~120k lines).
+- **Real-world** — [zod](https://github.com/colinhacks/zod), added as a git submodule pinned to commit `912f0f5`. It's checked with a small [`zod.tsconfig.bench.json`](./fixtures/real-world/zod.tsconfig.bench.json) that extends zod's own config and only disables two unused-variable lint rules (zod's test files intentionally declare type-assertion-only locals). We do **not** modify zod's source.
+
+### Measurement
+
+- **Time** — [`hyperfine`](https://github.com/sharkdp/hyperfine) with 2 warmup runs + 10 timed runs, reporting mean / median / standard deviation.
+- **Memory** — peak resident set size (`Maximum resident set size`) via GNU `time -v`.
+- **Runner** — the committed numbers come from a GitHub Actions Ubuntu runner; the runner's CPU/RAM is recorded in `summary.json` so results are always self-describing.
+
+## Limitations
+
+Please read the numbers with these caveats in mind:
+
+1. **TS7 is a preview.** The native compiler does not yet support the full TypeScript API surface or every config option. Treat it as "where things are heading," not a drop-in replacement today.
+2. **CI runners are noisy.** GitHub Actions uses shared virtual machines, so absolute times vary run to run. Trust the *ratios* and *trends* far more than any single millisecond figure; for precise numbers, run it locally on a quiet machine.
+3. **Synthetic code isn't real code.** The generated fixtures stress type-declaration volume, not the messy patterns of real applications. The zod fixture is included precisely because synthetic code can't represent everything.
+4. **Type-checking only.** This measures `tsc --noEmit`. It does not measure emit, bundling, incremental builds, or editor/language-server latency.
+5. **One machine class at a time.** A single run reflects one runner's core count and memory. `--checkers` scaling in particular depends heavily on how many cores are available.
+
+## Reproduce locally
+
+**Prerequisites:** Node.js 24+ (it runs the `.ts` scripts directly), [`hyperfine`](https://github.com/sharkdp/hyperfine), GNU `time` (macOS: `brew install gnu-time` provides `gtime`; Linux has it built in), and [`pnpm`](https://pnpm.io/) (zod is a pnpm workspace).
+
+```bash
+# 1. Clone with the zod submodule
+git clone --recurse-submodules https://github.com/youngilNoh/ts7-benchmark.git
+cd ts7-benchmark
+
+# 2. Install both compilers (prints the resolved { ts6, ts7 } versions)
+./scripts/install-both.sh
+
+# 3. Install the real-world fixture's dependencies
+(cd fixtures/real-world/zod && pnpm install --filter zod...)
+
+# 4. Generate the synthetic fixtures (small / medium / large)
+node fixtures/synthetic/generate.ts --files 10 --linesPerFile 50
+node fixtures/synthetic/generate.ts --files 10 --linesPerFile 1500
+node fixtures/synthetic/generate.ts --files 20 --linesPerFile 6000
+
+# 5. Run the benchmark (TS6 once per fixture, TS7 × checkers 1/4/8)
+./scripts/run-bench.sh
+
+# 6. Merge everything into results/summary.json
+node scripts/collect-results.ts
+```
+
+To view the dashboard against your local results:
+
+```bash
+cd site
+npm install
+npm run dev      # open the printed http://localhost:5173
+```
+
+## Repository structure
+
+```
+fixtures/
+  synthetic/        generate.ts + generated <size>/ folders
+  real-world/       zod (submodule) + zod.tsconfig.bench.json
+scripts/
+  install-both.sh   install both compilers, print versions as JSON
+  run-bench.sh      hyperfine + memory across fixtures × checkers
+  collect-results.ts  merge raw output into results/summary.json
+results/            per-run JSON + memory logs, and summary.json (CI-committed)
+site/               Vite dashboard (deployed to GitHub Pages)
+.github/workflows/  benchmark.yml — run, commit results, deploy the site
+```
+
+## Automation
+
+[`benchmark.yml`](./.github/workflows/benchmark.yml) runs on a weekly schedule (and can be triggered manually). It prints the runner spec, installs everything, regenerates the fixtures, runs the benchmark, commits the refreshed `results/`, and deploys the dashboard to GitHub Pages.
+
+## Contributing
+
+Contributions are welcome — see [CONTRIBUTING.md](./CONTRIBUTING.md).
+
+## License
+
+[MIT](./LICENSE) © Charlie. The bundled zod fixture is MIT-licensed and remains the property of its authors.
+
+## Acknowledgments
+
+- The TypeScript team and the [native compiler](https://github.com/microsoft/typescript-go) effort.
+- [zod](https://github.com/colinhacks/zod) — the real-world fixture.
+- [hyperfine](https://github.com/sharkdp/hyperfine) — the benchmarking harness.
