@@ -31,7 +31,7 @@ TS7은 TS6보다 대략 **3~4배** 빠르게 타입 체크를 합니다. 이 향
 
 합성 fixture는 상대적으로 작고 평평한 속도 향상을 보이는 반면, 복잡한 제네릭을 많이 쓰는 실제 프로젝트(zod)는 코어 수가 허락하는 한 checker를 늘릴수록 가장 큰 이득을 봅니다.
 
-최신 수치, 인터랙티브 차트, 전체 데이터 테이블은 **[실시간 데모](https://youngilnoh.github.io/ts7-benchmark/)**에서 확인하세요.
+최신 수치, 인터랙티브 차트, 전체 데이터 테이블은 **[실시간 데모](https://yesimnoh.github.io/ts7-benchmark/)**에서 확인하세요.
 
 원본 데이터는 [`results/`](./results/)에 있습니다. 대시보드가 읽는 병합된 파일은 [`results/summary.json`](./results/summary.json)이며, 그 구조는 [`scripts/collect-results.ts`](./scripts/collect-results.ts) 상단에 문서화되어 있습니다.
 
